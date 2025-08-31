@@ -1,13 +1,30 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
-</html>
+<body>
+
+  <header>
+    <h1>The Wealth Gap Amplifier</h1>
+    <p>An interactive model showing how the housing market impacts wealth inequality.</p>
+  </header>
+
+  <main>
+    <div id="dashboard">
+      <h2>Year: <span id="year-display">0</span></h2>
+      <div class="stats">
+        <p>Avg. Home Price: <span id="price-display">$500,000</span></p>
+        <p>Homeowners: <span id="homeowners-display">0</span></p>
+        <p>Renters: <span id="renters-display">1000</span></p>
+      </div>
+      <button id="next-year-button">Next Year &rarr;</button>
+    </div>
+
+    <div id="simulation-area">
+      <div id="population-display" class="display-box">
+        <h3>Population (1,000 households)</h3>
+        </div>
+      <div id="housing-display" class="display-box">
+        <h3>Housing Stock (300 homes)</h3>
+        </div>
+    </div>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
