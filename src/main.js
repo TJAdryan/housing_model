@@ -1,151 +1,210 @@
-// main.js
+// --- STATE & CONSTANTS ---
+const HOMES_TOTAL = 300;
+const housingStock = [];
+let year = 1; 
+let newHomesPerYear = 3; 
+let turnoverRate = 0.04; 
+let corporatePolicy = 'unleashed';
 
-import './style.css'
-
-import './style.css'
-
-// 1. SELECT THE ELEMENTS WE NEED TO CONTROL
-const yearDisplay = document.querySelector('#year-display');
-const priceDisplay = document.querySelector('#price-display');
-const homeownersDisplay = document.querySelector('#homeowners-display');
-const rentersDisplay = document.querySelector('#renters-display');
-
-const nextYearButton = document.querySelector('#next-year-button');
-
-const populationDisplay = document.querySelector('#population-display');
-const housingDisplay = document.querySelector('#housing-display');
-
-// 2. SET UP THE INITIAL STATE AND SETUP FUNCTION
-let modelState = {}; // Leave it empty for now
-
-function setupSimulation() {
-  modelState = {
-    year: 0,
-    averageHomePrice: 500000,
-    homeowners: 0,
-    renters: 1000,
-    population: [],
-    housingStock: [],
+// --- NEW: Seeded Random Number Generator ---
+// This will produce the same sequence of numbers every time, making our simulation predictable.
+function createSeededRandom(seed) {
+  let state = seed;
+  return function() {
+    state = (state * 1664525 + 1013904223) % 2**32;
+    return state / 2**32; // Returns a "random" number between 0 and 1
   };
+}
+let seededRandom; // This will hold our random function
 
-  // Create the population
-  for (let i = 0; i < 1000; i++) {
-    let householdType = 'renter';
-    if (i < 20) {
-      householdType = 'investor';
-    } else if (i < 600) {
-      householdType = 'mortgageReady';
-    }
-    modelState.population.push({ id: i, type: householdType, isHomeowner: false });
+const marketResults = {
+    purchasesByHomeowner: 0,
+    purchasesByCorporate: 0,
+    purchasesByIndividual: 0,
+    convertedToShortTerm: 0,
+};
+
+// --- CORE SIMULATION LOGIC ---
+function setupSimulation() {
+  housingStock.length = 0; 
+  for (let i = 0; i < HOMES_TOTAL; i++) {
+    let ownerType;
+    if (i < 25) { ownerType = 'corporate'; } 
+    else if (i < 105) { ownerType = 'individual'; } 
+    else { ownerType = 'homeowner'; }
+    housingStock.push({ 
+        id: i, 
+        ownerType: ownerType, 
+        type: 'SingleFamily', 
+        usage: 'LongTermRental',
+        // CHANGED: Using our new seeded random function
+        price: 300000 + seededRandom() * 200000 
+    });
   }
-
-  // Create the housing stock
-  for (let i = 0; i < 300; i++) {
-    modelState.housingStock.push({ id: i, status: 'forSale', owner: null });
-  }
-
-
-  updateDisplay();
 }
 
 function advanceYear() {
-  // A. Update the year and prices
-  modelState.year += 1;
-  modelState.averageHomePrice *= 1.05; // Slow down appreciation to 5% per year
+  year++;
+  turnoverRate = parseFloat(document.getElementById('turnover-rate-input').value) / 100;
+  newHomesPerYear = parseInt(document.getElementById('new-homes-input').value);
 
-  // B. Simulate a small number of new homes coming to market
-  const newHomesForSale = 15;
-  for (let i = 0; i < newHomesForSale; i++) {
-    const newId = modelState.housingStock.length;
-    modelState.housingStock.push({ id: newId, status: 'forSale', owner: null });
+  const appreciationRate = 0.03 + ( (3 - newHomesPerYear) * 0.02 );
+  housingStock.forEach(home => {
+      home.price *= (1 + appreciationRate);
+  });
+
+  const homesForSaleThisYear = Math.floor(housingStock.length * turnoverRate);
+
+  for (let i = 0; i < homesForSaleThisYear; i++) {
+    // CHANGED: Using our new seeded random function
+    const homeIndex = Math.floor(seededRandom() * housingStock.length);
+    const home = housingStock[homeIndex];
+    const roll = seededRandom();
+    let newOwnerType;
+
+    if (corporatePolicy === 'unleashed') {
+      if (roll < 0.60) { newOwnerType = 'corporate'; marketResults.purchasesByCorporate++; } 
+      else if (roll < 0.85) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; } 
+      else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+    } else {
+      if (roll < 0.65) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; } 
+      else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+    }
+    home.ownerType = newOwnerType;
+  }
+  
+  for (let i = 0; i < newHomesPerYear; i++) {
+      const newId = housingStock.length;
+      housingStock.push({ 
+          id: newId, 
+          ownerType: null, 
+          type: 'SingleFamily', 
+          usage: 'LongTermRental',
+          price: 400000 + seededRandom() * 250000
+      });
+      const roll = seededRandom();
+      let newOwnerType;
+      if (corporatePolicy === 'unleashed') {
+        if (roll < 0.60) { newOwnerType = 'corporate'; marketResults.purchasesByCorporate++; }
+        else if (roll < 0.85) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; }
+        else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+      } else {
+        if (roll < 0.65) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; }
+        else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+      }
+      housingStock[newId].ownerType = newOwnerType;
   }
 
-  // C. Run the market simulation for the newly available homes
-  const availableHomes = modelState.housingStock.filter(h => h.status === 'forSale');
-
-  // Investors get first pick of a few new homes
-  const investorPurchases = Math.min(availableHomes.length, 3); // Investors buy up to 3
-  availableHomes.slice(0, investorPurchases).forEach(house => house.status = 'rental');
-
-  // Mortgage-ready renters compete for the rest
-  const homesForBuyers = availableHomes.slice(investorPurchases);
-  const potentialBuyers = modelState.population.filter(p => !p.isHomeowner && p.type === 'mortgageReady');
-
-  homesForBuyers.forEach((house, index) => {
-    if (index < potentialBuyers.length) {
-      house.status = 'owned';
-      potentialBuyers[index].isHomeowner = true;
+  housingStock.forEach(home => {
+    if (home.ownerType !== 'homeowner' && home.usage === 'LongTermRental') {
+      if (seededRandom() < 0.05) { home.usage = 'ShortTermRental'; marketResults.convertedToShortTerm++; }
     }
   });
 
-  // D. Recalculate homeowner and renter counts
-  modelState.homeowners = modelState.population.filter(p => p.isHomeowner).length;
-  modelState.renters = 1000 - modelState.homeowners;
+  const corporateOwnedHomes = housingStock.filter(h => h.ownerType === 'corporate').length;
+  const corporateOwnershipRatio = corporateOwnedHomes / housingStock.length;
+  if (corporatePolicy === 'unleashed' && corporateOwnershipRatio > 0.30) {
+      if (seededRandom() < 0.25) {
+          const newHomesInput = document.getElementById('new-homes-input');
+          const currentNewHomes = parseInt(newHomesInput.value);
+          if (currentNewHomes > 0) {
+            newHomesInput.value = currentNewHomes - 1;
+          }
+      }
+  }
 
-  // E. Update the display on the screen
   updateDisplay();
+  renderVisualGrid();
 }
+
+function resetSimulation() {
+    // NEW: Re-initialize the random number generator with the same seed
+    seededRandom = createSeededRandom(12345);
+
+    year = 1;
+    newHomesPerYear = 3;
+    turnoverRate = 0.04;
+    corporatePolicy = 'unleashed';
+
+    marketResults.purchasesByHomeowner = 0;
+    marketResults.purchasesByCorporate = 0;
+    marketResults.purchasesByIndividual = 0;
+    marketResults.convertedToShortTerm = 0;
+    
+    document.getElementById('turnover-rate-input').value = 4;
+    document.getElementById('new-homes-input').value = 3;
+    document.getElementById('unleash-corporate-btn').classList.add('active');
+    document.getElementById('restrict-corporate-btn').classList.remove('active');
+
+    setupSimulation();
+    updateDisplay();
+    renderVisualGrid();
+}
+
+// --- DISPLAY & RENDERING ---
 function updateDisplay() {
-  yearDisplay.textContent = modelState.year;
-  priceDisplay.textContent = '
-// src/main.js
+  const currentTotals = { homeowner: 0, individual: 0, corporate: 0 };
+  housingStock.forEach(home => { if(home.ownerType) currentTotals[home.ownerType]++; });
 
-function renderVisuals() {
-  // Clear previous visuals
-  housingDisplay.innerHTML = '';
+  document.getElementById('current-homeowner-total').textContent = currentTotals.homeowner;
+  document.getElementById('current-individual-total').textContent = currentTotals.individual;
+  document.getElementById('current-corporate-total').textContent = currentTotals.corporate;
+  
+  const prices = housingStock.map(home => home.price).sort((a, b) => a - b);
+  const mid = Math.floor(prices.length / 2);
+  const medianPrice = prices.length % 2 === 0 ? (prices[mid - 1] + prices[mid]) / 2 : prices[mid];
+  document.getElementById('median-home-price').textContent = `$${Math.round(medianPrice / 1000)}k`;
 
-  // Draw each house in the housing stock
-  modelState.housingStock.forEach(house => {
-    const houseElement = document.createElement('div');
-    houseElement.classList.add('house-icon');
-    houseElement.classList.add(house.status); // Adds 'forSale', 'owned', or 'rental' as a class
-    housingDisplay.appendChild(houseElement);
+  document.getElementById('year-display').textContent = year; 
+  document.getElementById('buyer-first-time').textContent = marketResults.purchasesByHomeowner;
+  document.getElementById('buyer-corporate').textContent = marketResults.purchasesByCorporate;
+  document.getElementById('buyer-individual').textContent = marketResults.purchasesByIndividual;
+  document.getElementById('conversions-airbnb').textContent = marketResults.convertedToShortTerm;
+}
+
+function renderVisualGrid() {
+  const grid = document.getElementById('housing-visual-grid');
+  grid.innerHTML = ''; 
+  housingStock.forEach(home => {
+    const houseDiv = document.createElement('div');
+    houseDiv.classList.add('house');
+
+    // NEW LOGIC: If a home is a short-term rental, color it purple.
+    // Otherwise, color it by its owner type.
+    if (home.usage === 'ShortTermRental') {
+      houseDiv.classList.add('shortterm');
+    } else if (home.ownerType) {
+      houseDiv.classList.add(home.ownerType); 
+    }
+    
+    grid.appendChild(houseDiv);
   });
 }
 
-// 4. ATTACH THE LOGIC TO THE BUTTON
-setupSimulation(); // 1. Set up the initial data.
-nextYearButton.addEventListener('click', advanceYear); // 2. THEN, tell the button how to use that data.
-} + Math.round(modelState.averageHomePrice).toLocaleString();
-  homeownersDisplay.textContent = modelState.homeowners;
-  rentersDisplay.textContent = modelState.renters;
+// --- INITIALIZER ---
+document.addEventListener('DOMContentLoaded', () => {
+  // NEW: Initialize the random number generator on page load
+  seededRandom = createSeededRandom(12345);
 
-  renderVisuals(); // This line is crucial!
-}
-// src/main.js
+  setupSimulation();
+  updateDisplay();
+  renderVisualGrid();
 
-function renderVisuals() {
-  // Clear previous visuals
-  housingDisplay.innerHTML = '';
+  document.getElementById('next-year-btn').addEventListener('click', advanceYear);
+  document.getElementById('reset-btn').addEventListener('click', resetSimulation);
 
-  // Draw each house in the housing stock
-  modelState.housingStock.forEach(house => {
-    const houseElement = document.createElement('div');
-    houseElement.classList.add('house-icon');
-    houseElement.classList.add(house.status); // Adds 'forSale', 'owned', or 'rental' as a class
-    housingDisplay.appendChild(houseElement);
+  const unleashBtn = document.getElementById('unleash-corporate-btn');
+  const restrictBtn = document.getElementById('restrict-corporate-btn');
+
+  unleashBtn.addEventListener('click', () => {
+    corporatePolicy = 'unleashed';
+    unleashBtn.classList.add('active');
+    restrictBtn.classList.remove('active');
   });
-}
 
-// 4. ATTACH THE LOGIC TO THE BUTTON
-setupSimulation(); // 1. Set up the initial data.
-nextYearButton.addEventListener('click', advanceYear); // 2. THEN, tell the button how to use that data.
-// src/main.js
-
-function renderVisuals() {
-  // Clear previous visuals
-  housingDisplay.innerHTML = '';
-
-  // Draw each house in the housing stock
-  modelState.housingStock.forEach(house => {
-    const houseElement = document.createElement('div');
-    houseElement.classList.add('house-icon');
-    houseElement.classList.add(house.status); // Adds 'forSale', 'owned', or 'rental' as a class
-    housingDisplay.appendChild(houseElement);
+  restrictBtn.addEventListener('click', () => {
+    corporatePolicy = 'restricted';
+    restrictBtn.classList.add('active');
+    unleashBtn.classList.remove('active');
   });
-}
-
-// 4. ATTACH THE LOGIC TO THE BUTTON
-setupSimulation(); // 1. Set up the initial data.
-nextYearButton.addEventListener('click', advanceYear); // 2. THEN, tell the button how to use that data.
-}
+});

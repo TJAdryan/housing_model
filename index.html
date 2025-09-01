@@ -1,30 +1,96 @@
-<body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Housing Market Simulation</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Housing Market Simulation</h1>
+        <p>An interactive model showing how corporate ownership and speculation affect a housing market.</p>
+      </header>
 
-  <header>
-    <h1>The Wealth Gap Amplifier</h1>
-    <p>An interactive model showing how the housing market impacts wealth inequality.</p>
-  </header>
-
-  <main>
-    <div id="dashboard">
-      <h2>Year: <span id="year-display">0</span></h2>
-      <div class="stats">
-        <p>Avg. Home Price: <span id="price-display">$500,000</span></p>
-        <p>Homeowners: <span id="homeowners-display">0</span></p>
-        <p>Renters: <span id="renters-display">1000</span></p>
+      <div class="controls">
+        <div class="parameter-controls">
+          <div>
+            <label for="turnover-rate-input">Turnover Rate (%)</label>
+            <input type="number" id="turnover-rate-input" value="4" min="0" max="100" step="1">
+          </div>
+          <div>
+            <label for="new-homes-input">New Home Construction</label>
+            <input type="number" id="new-homes-input" value="3" min="0" max="20">
+          </div>
+        </div>
+        
+        <div class="policy-controls">
+          <label>Market Policy:</label>
+          <button id="unleash-corporate-btn" class="active">Free Reign</button>
+          <button id="restrict-corporate-btn">Restrict Corporate</button>
+        </div>
+        
+        <button id="reset-btn">Reset</button>
+        <button id="next-year-btn">Advance Year</button>
+        <h2>Year: <span id="year-display">1</span></h2>
       </div>
-      <button id="next-year-button">Next Year &rarr;</button>
+
+      <main>
+        <h3>Current Ownership & Market Stats</h3>
+        <div class="dashboard">
+          <div class="card">
+            <label>Homeowner</label>
+            <span id="current-homeowner-total">0</span>
+          </div>
+          <div class="card">
+            <label>Individual Landlord</label>
+            <span id="current-individual-total">0</span>
+          </div>
+          <div class="card">
+            <label>Corporate Landlord</label>
+            <span id="current-corporate-total">0</span>
+          </div>
+          <div class="card">
+            <label>Median Home Price</label>
+            <span id="median-home-price">$0</span>
+          </div>
+        </div>
+
+        <div id="housing-visual-grid"></div>
+        
+        <div class="legend">
+            <div><span class="dot homeowner"></span> Homeowner</div>
+            <div><span class="dot individual"></span> Individual Landlord</div>
+            <div><span class="dot corporate"></span> Corporate Landlord</div>
+            <div><span class="dot shortterm"></span> Short-Term Rental</div>
+        </div>
+        
+        <hr class="divider">
+
+        <h3>Market Activity (Total Purchases Since Start)</h3>
+        <div class="dashboard">
+          <div class="card">
+            <label>Primary Home Purchasers</label>
+            <span id="buyer-first-time">0</span>
+          </div>
+          <div class="card">
+            <label>Corporate Landlords</label>
+            <span id="buyer-corporate">0</span>
+          </div>
+          <div class="card">
+            <label>Individual Landlords</label>
+            <span id="buyer-individual">0</span>
+          </div>
+          <div class="card">
+            <label>Converted to Short-Term Rental</label>
+            <span id="conversions-airbnb">0</span>
+          </div>
+        </div>
+
+      </main>
     </div>
 
-    <div id="simulation-area">
-      <div id="population-display" class="display-box">
-        <h3>Population (1,000 households)</h3>
-        </div>
-      <div id="housing-display" class="display-box">
-        <h3>Housing Stock (300 homes)</h3>
-        </div>
-    </div>
-  </main>
-
-  <script type="module" src="/src/main.js"></script>
-</body>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
