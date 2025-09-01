@@ -10,7 +10,7 @@
     <div class="container">
       <header>
         <h1>Housing Market Simulation</h1>
-        <p>An interactive model showing how corporate ownership and speculation affect a housing market.</p>
+        <p>An interactive model for housing market dynamics.</p>
       </header>
 
       <div class="controls-container">
@@ -65,7 +65,7 @@
           <div class="card"><label>Median Home Price</label><span id="median-home-price">$0</span></div>
           <div class="card"><label>Median Rent</label><span id="median-rent">$0</span></div>
           <div class="card"><label>Total Rental Units</label><span id="available-rental-units">0</span></div>
-          <div class="card"><label>Demand Status</label><span id="demand-status">Stable</span></div>
+          <div class="card"><label>Total Homes</label><span id="total-homes">300</span></div>
         </div>
 
         <div id="housing-visual-grid"></div>
@@ -85,6 +85,12 @@
           <div class="card"><label>Corporate Landlords</label><span id="buyer-corporate">0</span></div>
           <div class="card"><label>Individual Landlords</label><span id="buyer-individual">0</span></div>
           <div class="card"><label>Converted to Short-Term Rental</label><span id="conversions-airbnb">0</span></div>
+        </div>
+        <div class="dashboard">
+          <div class="card"><label>% Change Owner-Occupied</label><span id="pct-owner-occupied">0%</span></div>
+          <div class="card"><label>% Change Individual Landlords</label><span id="pct-individual-landlords">0%</span></div>
+          <div class="card"><label>% Change Corporate Landlords</label><span id="pct-corporate-landlords">0%</span></div>
+          <div class="card"><label>% Change Rentals Available</label><span id="pct-apartments-available">0%</span></div>
         </div>
       </main>
     </div>

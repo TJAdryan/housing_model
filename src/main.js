@@ -6,7 +6,13 @@ let corporatePolicy = 'free'; // 'free', 'restrict', 'divest'
 let strPolicy = 'free';       // 'free', 'restrict', 'ban'
 let demandFactor = 1.0; 
 let simulationIntervalId = null;
+
 let seededRandom;
+// Store initial values for percent change calculations
+let initialOwnerOccupied = 0;
+let initialIndividualLandlords = 0;
+let initialCorporateLandlords = 0;
+let initialApartmentsAvailable = 0;
 
 // --- Helper: Seeded Random Number Generator ---
 function createSeededRandom(seed) {
@@ -32,13 +38,19 @@ function setupSimulation() {
     if (i < 25) { ownerType = 'corporate'; }
     else if (i < 105) { ownerType = 'individual'; }
     else { ownerType = 'homeowner'; }
-    
     const price = 300000 + seededRandom() * 200000;
+    // First 3 homes are short term rentals
+    let usage = (i < 3) ? 'ShortTermRental' : 'LongTermRental';
     housingStock.push({
       id: i, ownerType: ownerType, type: 'SingleFamily',
-      usage: 'LongTermRental', price: price, rent: price * 0.005, 
+      usage: usage, price: price, rent: price * 0.005, 
     });
   }
+  // Set initial values for percent change
+  initialOwnerOccupied = housingStock.filter(h => h.ownerType === 'homeowner').length;
+  initialIndividualLandlords = housingStock.filter(h => h.ownerType === 'individual').length;
+  initialCorporateLandlords = housingStock.filter(h => h.ownerType === 'corporate').length;
+  initialApartmentsAvailable = housingStock.filter(h => h.ownerType !== 'homeowner' && h.usage === 'LongTermRental').length;
 }
 
 function advanceYear() {
@@ -109,11 +121,22 @@ function advanceYear() {
         if (home.usage === 'ShortTermRental' && seededRandom() < 0.20) { home.usage = 'LongTermRental'; }
     });
   }
+
   const strHomes = housingStock.filter(h => h.usage === 'ShortTermRental').length;
   const strRatio = strHomes / housingStock.length;
   const longTermRentals = housingStock.filter(h => h.ownerType !== 'homeowner' && h.usage === 'LongTermRental');
-  
-  longTermRentals.forEach(unit => {
+
+  // Select 10% of long-term rentals as vacant
+  const vacancyRate = 0.1;
+  const numVacant = Math.floor(longTermRentals.length * vacancyRate);
+  // Shuffle longTermRentals to randomize selection
+  const shuffled = [...longTermRentals];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const vacantUnits = shuffled.slice(0, numVacant);
+  vacantUnits.forEach(unit => {
     let canConvertToSTR = (strPolicy === 'free') || (strPolicy === 'restrict' && strRatio < 0.10);
     if (canConvertToSTR && seededRandom() < 0.05) {
       unit.usage = 'ShortTermRental';
@@ -186,8 +209,25 @@ function resetSimulation() {
 }
 
 function updateDisplay() {
+
   const currentTotals = { homeowner: 0, individual: 0, corporate: 0 };
   housingStock.forEach(home => { if(home.ownerType) currentTotals[home.ownerType]++; });
+
+  // Calculate percent changes from initial values (after currentTotals is initialized)
+  const currentOwnerOccupied = currentTotals.homeowner;
+  const currentIndividualLandlords = currentTotals.individual;
+  const currentCorporateLandlords = currentTotals.corporate;
+  const currentApartmentsAvailable = housingStock.filter(h => h.ownerType !== 'homeowner' && h.usage === 'LongTermRental').length;
+
+  const pctOwnerOccupied = initialOwnerOccupied ? ((currentOwnerOccupied - initialOwnerOccupied) / initialOwnerOccupied * 100) : 0;
+  const pctIndividualLandlords = initialIndividualLandlords ? ((currentIndividualLandlords - initialIndividualLandlords) / initialIndividualLandlords * 100) : 0;
+  const pctCorporateLandlords = initialCorporateLandlords ? ((currentCorporateLandlords - initialCorporateLandlords) / initialCorporateLandlords * 100) : 0;
+  const pctApartmentsAvailable = initialApartmentsAvailable ? ((currentApartmentsAvailable - initialApartmentsAvailable) / initialApartmentsAvailable * 100) : 0;
+
+  document.getElementById('pct-owner-occupied').textContent = (pctOwnerOccupied >= 0 ? '+' : '') + pctOwnerOccupied.toFixed(1) + '%';
+  document.getElementById('pct-individual-landlords').textContent = (pctIndividualLandlords >= 0 ? '+' : '') + pctIndividualLandlords.toFixed(1) + '%';
+  document.getElementById('pct-corporate-landlords').textContent = (pctCorporateLandlords >= 0 ? '+' : '') + pctCorporateLandlords.toFixed(1) + '%';
+  document.getElementById('pct-apartments-available').textContent = (pctApartmentsAvailable >= 0 ? '+' : '') + pctApartmentsAvailable.toFixed(1) + '%';
 
   document.getElementById('current-homeowner-total').textContent = currentTotals.homeowner;
   document.getElementById('current-individual-total').textContent = currentTotals.individual;
@@ -208,16 +248,12 @@ function updateDisplay() {
     document.getElementById('median-rent').textContent = 'N/A';
   }
 
-  const availableRentals = rentalProperties.filter(h => h.usage === 'LongTermRental').length;
-  document.getElementById('available-rental-units').textContent = availableRentals;
 
-  const demandStatusEl = document.getElementById('demand-status');
-  let demandText = 'Stable';
-  if (demandFactor >= 1.20) { demandText = 'Extreme'; } 
-  else if (demandFactor >= 1.10) { demandText = 'High'; } 
-  else if (demandFactor > 1.0) { demandText = 'Growing'; }
-  demandStatusEl.textContent = demandText;
-  demandStatusEl.className = `demand-${demandText.toLowerCase()}`;
+    const availableRentals = rentalProperties.filter(h => h.usage === 'LongTermRental').length;
+    document.getElementById('available-rental-units').textContent = availableRentals;
+
+    // Update total homes
+    document.getElementById('total-homes').textContent = housingStock.length;
 
   document.getElementById('year-display').textContent = year; 
   document.getElementById('buyer-first-time').textContent = marketResults.purchasesByHomeowner;
