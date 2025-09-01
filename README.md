@@ -1,60 +1,50 @@
-Brainstormer
+# Housing Market Simulation
 
-Show thinking
-Of course. Providing a clear, updated summary is a great idea to get a new assistant up to speed quickly.
+An interactive web-based model that demonstrates how corporate ownership, housing supply, and market policies affect home and rent prices.
 
-Here is an updated README.md file that explains the project's purpose, its current features, and how to run it.
 
-The Wealth Gap Amplifier: An Interactive Model
-This project is an interactive web-based model designed to demonstrate how housing market dynamics can perpetuate a wealth crisis and worsen economic inequality. It visually simulates a housing market over multiple years, showing how an initial wealth disparity is magnified through mechanisms like cash buying and an ongoing shortage of new homes.
 
-Current Project Status
-The model is partially implemented and functional. The current features include:
+---
+## About The Project
 
-Interactive Controls: A "Next Year" button advances the simulation one year at a time.
+This simulation models a housing market of 300 properties to visualize the impact of various economic forces. Users can adjust parameters and enact policies to see how the market balance shifts between regular homeowners, individual landlords, and large corporate landlords over time.
 
-Dynamic Dashboard: The dashboard displays the current year, average home price, and the total number of homeowners and renters, all of which update annually.
+The core of the simulation is a feedback loop where increased corporate ownership can lead to reduced housing supply, which in turn drives up prices and makes it easier for cash-rich buyers to acquire more properties.
 
-Market Simulation Logic:
+---
+## Features
 
-The simulation starts with 1,000 households (categorized as investors, mortgage-ready, or renters) and 300 homes.
+* **Dynamic Market:** Watch median home prices and rents appreciate based on supply and demand.
+* **Multiple Buyer Types:** See how Primary Home Purchasers compete against Individual and Corporate Landlords, each with different advantages.
+* **Interactive Parameters:** Adjust the housing turnover rate and the amount of new construction to see the immediate impact on the market.
+* **Advanced Policy Controls:** Experiment with different regulatory environments:
+    * **Corporate Policy:** Allow free reign, restrict corporate ownership to a 10% market share, or even force corporations to divest their properties.
+    * **Short-Term Rental Policy:** Allow unregulated conversions, restrict them to a 10% cap, or ban them entirely.
+* **Multi-Year Simulation:** Run the simulation for up to 100 years at a time to quickly see long-term trends.
+* **Visual Dashboard:** Track key metrics like ownership distribution, median prices, and total purchases on a clean, easy-to-read dashboard.
+* **Visual Housing Grid:** A color-coded grid represents every home in the market, providing an at-a-glance view of the ownership landscape.
 
-Each year, the average home price increases by a realistic 5%.
+---
+## Built With
 
-A small number of new homes (15) are added to the market annually.
+* Vanilla HTML, CSS & JavaScript
+* [Vite](https://vitejs.dev/)
+* [Bun](https://bun.sh/)
 
-Investor-class buyers purchase a portion of the new homes, converting them to rentals.
+---
+## Getting Started
 
-Mortgage-ready buyers compete for the remaining new homes.
+To get a local copy up and running, follow these simple steps.
 
-Visual Representation:
-
-The housing stock is displayed as a grid of icons.
-
-Icons are color-coded to represent their status: For Sale (green), Owned (blue), and Rental (gold).
-
-The grid updates each year to show the change in homeownership status.
-
-🚀 How to Run
-This project is built with Vite and uses Bun as its package manager and runtime.
-
-Install Dependencies:
-From the project's root directory (vite-project), run:
-
-Bash
-
-bun install
-Run the Local Development Server:
-To start the live-reloading development server, run:
-
-Bash
-
-bun dev
-The terminal will provide a local URL (usually http://localhost:5173) to view the project in a web browser.
-
-📂 Project Structure
-index.html: Contains the HTML structure for the dashboard and the simulation's visual area.
-
-src/main.js: Holds all the JavaScript logic for the simulation, including the initial state setup, the advanceYear function that runs the market logic, and the functions that update the dashboard and visuals.
-
-style.css: Contains all the CSS for the page layout, dashboard styling, and the color-coding of the housing stock visuals.
+1.  Clone the repo
+    ```sh
+    git clone [https://github.com/tja_dryan/housing_model.git](https://github.com/your_username/your_project_name.git)
+    ```
+2.  Install dependencies
+    ```sh
+    bun install
+    ```
+3.  Run the development server
+    ```sh
+    bun dev
+    ```

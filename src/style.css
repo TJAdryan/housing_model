@@ -6,7 +6,6 @@
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   --border-radius: 8px;
   
-  /* Colors for visualization */
   --homeowner-color: #2ecc71; /* Green */
   --individual-color: #3498db; /* Blue */
   --corporate-color: #e74c3c;  /* Red */
@@ -25,7 +24,7 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1200px;
   width: 100%;
 }
 
@@ -37,123 +36,78 @@ header {
   padding-bottom: 1rem;
 }
 
-.controls {
+.controls-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-#next-year-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-#next-year-btn:hover {
-  background-color: #2980b9;
-}
-
-/* Dashboard and Cards */
-main h3 {
-    margin-top: 3rem;
-    text-align: center;
-    color: #333;
-}
-
-.dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; 
   gap: 1rem;
-  margin-top: 1rem;
 }
 
-.card {
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bottom-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Parameter & Sim Controls Styles */
+.parameter-controls, .sim-controls {
+  display: flex;
+  gap: 15px;
   background-color: var(--card-bg);
-  padding: 1.5rem;
+  padding: 8px 12px;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
+  align-items: center;
+}
+.parameter-controls div {
+  display: flex;
+  flex-direction: column;
+}
+.parameter-controls label, .sim-controls label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+.parameter-controls input, .sim-controls input {
+  width: 60px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
   text-align: center;
 }
 
-.card label {
-  display: block;
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 0.5rem;
-}
-
-.card span {
-  font-size: 2.5rem;
+#run-simulation-btn {
+  background-color: #27ae60;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
   font-weight: bold;
-  color: #333;
-}
-
-/* Housing Visualization Grid */
-#housing-visual-grid {
-  display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  gap: 4px;
-  background-color: #e0e0e0;
-  padding: 10px;
-  border-radius: var(--border-radius);
-  margin-top: 1rem;
-}
-
-.house {
-  width: 100%;
-  padding-bottom: 100%; /* Creates a square aspect ratio */
-  background-color: #ccc;
-}
-
-.house.homeowner { background-color: var(--homeowner-color); }
-.house.individual { background-color: var(--individual-color); }
-.house.corporate { background-color: var(--corporate-color); }
-.house.shortterm { background-color: var(--shortterm-color); }
-
-
-/* Legend and Divider */
-.legend {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    padding: 1rem;
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-}
-
-.legend div {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.dot {
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    border: 1px solid rgba(0,0,0,0.1);
-}
-
-.dot.homeowner { background-color: var(--homeowner-color); }
-.dot.individual { background-color: var(--individual-color); }
-.dot.corporate { background-color: var(--corporate-color); }
-.dot.shortterm { background-color: var(--shortterm-color); }
-
-.divider {
-    border: none;
-    border-top: 1px solid #ddd;
-    margin: 3rem auto;
-    width: 80%;
+  cursor: pointer;
 }
 
 /* Policy Controls Styles */
@@ -180,55 +134,107 @@ main h3 {
   font-size: 0.9rem;
 }
 .policy-controls button.active {
-  background-color: #e74c3c; /* Red */
+  background-color: #34495e; 
   color: white;
-  border-color: #c0392b;
-}
-#policy-status {
-    font-size: 0.8rem;
-    color: #666;
-    margin-left: 10px;
+  border-color: #2c3e50;
 }
 
-/* Parameter Controls Styles */
-.parameter-controls {
-  display: flex;
-  gap: 15px;
-  background-color: var(--card-bg);
-  padding: 8px 12px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  align-items: center;
-}
-.parameter-controls div {
-  display: flex;
-  flex-direction: column;
-}
-.parameter-controls label {
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 4px;
-}
-.parameter-controls input {
-  width: 60px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-  text-align: center;
-}
-#reset-btn {
-  background-color: #f39c12; /* Orange */
-  color: white;
-  border: none;
+#reset-btn, #next-year-btn {
   padding: 12px 24px;
   border-radius: var(--border-radius);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s;
+  border: none;
+  color: white;
 }
 
-#reset-btn:hover {
-    background-color: #e67e22;
+#reset-btn { background-color: #f39c12; }
+#next-year-btn { background-color: #3498db; }
+
+/* Dashboard and Cards */
+main h3 {
+    margin-top: 3rem;
+    text-align: center;
+    color: #333;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.card {
+  background-color: var(--card-bg);
+  padding: 0.7rem 0.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.card label {
+  display: block;
+  font-size: 0.75rem;
+  color: #555;
+  margin-bottom: 0.2rem;
+}
+.card span {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Housing Visualization Grid */
+/* Smaller housing grid and tiles */
+#housing-visual-grid {
+  display: grid;
+  grid-template-columns: repeat(30, 1fr);
+  gap: 2px;
+  background-color: #e0e0e0;
+  padding: 6px;
+  border-radius: var(--border-radius);
+  margin-top: 0.5rem;
+}
+.house {
+  width: 100%;
+  padding-bottom: 80%;
+  background-color: #ccc;
+}
+.house.homeowner { background-color: var(--homeowner-color); }
+.house.individual { background-color: var(--individual-color); }
+.house.corporate { background-color: var(--corporate-color); }
+.house.shortterm { background-color: var(--shortterm-color); }
+
+/* Legend and Divider */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+.legend div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.dot.homeowner { background-color: var(--homeowner-color); }
+.dot.individual { background-color: var(--individual-color); }
+.dot.corporate { background-color: var(--corporate-color); }
+.dot.shortterm { background-color: var(--shortterm-color); }
+.divider {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 3rem auto;
+    width: 80%;
 }

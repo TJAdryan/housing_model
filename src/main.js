@@ -1,21 +1,21 @@
 // --- STATE & CONSTANTS ---
 const HOMES_TOTAL = 300;
 const housingStock = [];
-let year = 1; 
-let newHomesPerYear = 3; 
-let turnoverRate = 0.04; 
-let corporatePolicy = 'unleashed';
+let year = 1;
+let corporatePolicy = 'free'; // 'free', 'restrict', 'divest'
+let strPolicy = 'free';       // 'free', 'restrict', 'ban'
+let demandFactor = 1.0; 
+let simulationIntervalId = null;
+let seededRandom;
 
-// --- NEW: Seeded Random Number Generator ---
-// This will produce the same sequence of numbers every time, making our simulation predictable.
+// --- Helper: Seeded Random Number Generator ---
 function createSeededRandom(seed) {
   let state = seed;
   return function() {
     state = (state * 1664525 + 1013904223) % 2**32;
-    return state / 2**32; // Returns a "random" number between 0 and 1
+    return state / 2**32;
   };
 }
-let seededRandom; // This will hold our random function
 
 const marketResults = {
     purchasesByHomeowner: 0,
@@ -26,90 +26,105 @@ const marketResults = {
 
 // --- CORE SIMULATION LOGIC ---
 function setupSimulation() {
-  housingStock.length = 0; 
+  housingStock.length = 0;
   for (let i = 0; i < HOMES_TOTAL; i++) {
     let ownerType;
-    if (i < 25) { ownerType = 'corporate'; } 
-    else if (i < 105) { ownerType = 'individual'; } 
+    if (i < 25) { ownerType = 'corporate'; }
+    else if (i < 105) { ownerType = 'individual'; }
     else { ownerType = 'homeowner'; }
-    housingStock.push({ 
-        id: i, 
-        ownerType: ownerType, 
-        type: 'SingleFamily', 
-        usage: 'LongTermRental',
-        // CHANGED: Using our new seeded random function
-        price: 300000 + seededRandom() * 200000 
+    
+    const price = 300000 + seededRandom() * 200000;
+    housingStock.push({
+      id: i, ownerType: ownerType, type: 'SingleFamily',
+      usage: 'LongTermRental', price: price, rent: price * 0.005, 
     });
   }
 }
 
 function advanceYear() {
   year++;
-  turnoverRate = parseFloat(document.getElementById('turnover-rate-input').value) / 100;
-  newHomesPerYear = parseInt(document.getElementById('new-homes-input').value);
+  const turnoverRate = parseFloat(document.getElementById('turnover-rate-input').value) / 100;
+  let newHomesPerYear = parseInt(document.getElementById('new-homes-input').value);
 
-  const appreciationRate = 0.03 + ( (3 - newHomesPerYear) * 0.02 );
+  if (seededRandom() < 0.20) { demandFactor += 0.05; }
+
+  const appreciationRate = (0.03 * demandFactor) + ((3 - newHomesPerYear) * 0.02);
   housingStock.forEach(home => {
-      home.price *= (1 + appreciationRate);
+    home.price *= (1 + appreciationRate);
+    if (home.ownerType !== 'homeowner') { home.rent *= (1 + appreciationRate); }
   });
+
+  const corporateOwnedHomes = housingStock.filter(h => h.ownerType === 'corporate');
+  const corporateOwnershipRatio = corporateOwnedHomes.length / housingStock.length;
+
+  if (corporatePolicy === 'divest' && corporateOwnershipRatio > 0.10) {
+      const homeToSell = corporateOwnedHomes[Math.floor(seededRandom() * corporateOwnedHomes.length)];
+      homeToSell.ownerType = seededRandom() < 0.7 ? 'individual' : 'homeowner';
+  }
 
   const homesForSaleThisYear = Math.floor(housingStock.length * turnoverRate);
 
   for (let i = 0; i < homesForSaleThisYear; i++) {
-    // CHANGED: Using our new seeded random function
     const homeIndex = Math.floor(seededRandom() * housingStock.length);
     const home = housingStock[homeIndex];
     const roll = seededRandom();
     let newOwnerType;
 
-    if (corporatePolicy === 'unleashed') {
-      if (roll < 0.60) { newOwnerType = 'corporate'; marketResults.purchasesByCorporate++; } 
-      else if (roll < 0.85) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; } 
-      else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+    let corpCanBuy = (corporatePolicy === 'free') || (corporatePolicy === 'restrict' && corporateOwnershipRatio < 0.10);
+
+    if (corpCanBuy && roll < 0.60) {
+        newOwnerType = 'corporate'; marketResults.purchasesByCorporate++;
     } else {
-      if (roll < 0.65) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; } 
-      else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+        const otherBuyerRoll = corpCanBuy ? (roll - 0.60) / 0.40 : roll;
+        if (otherBuyerRoll < 0.625) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; } 
+        else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
     }
     home.ownerType = newOwnerType;
   }
   
   for (let i = 0; i < newHomesPerYear; i++) {
       const newId = housingStock.length;
+      const newPrice = 400000 + seededRandom() * 250000;
       housingStock.push({ 
-          id: newId, 
-          ownerType: null, 
-          type: 'SingleFamily', 
-          usage: 'LongTermRental',
-          price: 400000 + seededRandom() * 250000
+          id: newId, ownerType: null, type: 'SingleFamily', 
+          usage: 'LongTermRental', price: newPrice, rent: newPrice * 0.005
       });
+      const home = housingStock[newId];
       const roll = seededRandom();
       let newOwnerType;
-      if (corporatePolicy === 'unleashed') {
-        if (roll < 0.60) { newOwnerType = 'corporate'; marketResults.purchasesByCorporate++; }
-        else if (roll < 0.85) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; }
-        else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+      let corpCanBuy = (corporatePolicy === 'free') || (corporatePolicy === 'restrict' && corporateOwnershipRatio < 0.10);
+
+      if (corpCanBuy && roll < 0.60) {
+          newOwnerType = 'corporate'; marketResults.purchasesByCorporate++;
       } else {
-        if (roll < 0.65) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; }
-        else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
+          const otherBuyerRoll = corpCanBuy ? (roll - 0.60) / 0.40 : roll;
+          if (otherBuyerRoll < 0.625) { newOwnerType = 'individual'; marketResults.purchasesByIndividual++; } 
+          else { newOwnerType = 'homeowner'; marketResults.purchasesByHomeowner++; }
       }
-      housingStock[newId].ownerType = newOwnerType;
+      home.ownerType = newOwnerType;
   }
 
-  housingStock.forEach(home => {
-    if (home.ownerType !== 'homeowner' && home.usage === 'LongTermRental') {
-      if (seededRandom() < 0.05) { home.usage = 'ShortTermRental'; marketResults.convertedToShortTerm++; }
+  if (strPolicy === 'ban') {
+    housingStock.forEach(home => {
+        if (home.usage === 'ShortTermRental' && seededRandom() < 0.20) { home.usage = 'LongTermRental'; }
+    });
+  }
+  const strHomes = housingStock.filter(h => h.usage === 'ShortTermRental').length;
+  const strRatio = strHomes / housingStock.length;
+  const longTermRentals = housingStock.filter(h => h.ownerType !== 'homeowner' && h.usage === 'LongTermRental');
+  
+  longTermRentals.forEach(unit => {
+    let canConvertToSTR = (strPolicy === 'free') || (strPolicy === 'restrict' && strRatio < 0.10);
+    if (canConvertToSTR && seededRandom() < 0.05) {
+      unit.usage = 'ShortTermRental';
+      marketResults.convertedToShortTerm++;
     }
   });
 
-  const corporateOwnedHomes = housingStock.filter(h => h.ownerType === 'corporate').length;
-  const corporateOwnershipRatio = corporateOwnedHomes / housingStock.length;
-  if (corporatePolicy === 'unleashed' && corporateOwnershipRatio > 0.30) {
+  if (corporatePolicy === 'free' && corporateOwnershipRatio > 0.30) {
       if (seededRandom() < 0.25) {
           const newHomesInput = document.getElementById('new-homes-input');
-          const currentNewHomes = parseInt(newHomesInput.value);
-          if (currentNewHomes > 0) {
-            newHomesInput.value = currentNewHomes - 1;
-          }
+          if (parseInt(newHomesInput.value) > 0) { newHomesInput.value--; }
       }
   }
 
@@ -117,31 +132,59 @@ function advanceYear() {
   renderVisualGrid();
 }
 
+const allControls = ['run-simulation-btn', 'reset-btn', 'next-year-btn', 'corp-policy-free', 'corp-policy-restrict', 'corp-policy-divest', 'str-policy-free', 'str-policy-restrict', 'str-policy-ban', 'turnover-rate-input', 'new-homes-input', 'years-to-run-input'];
+
+function toggleControls(disabled) {
+    allControls.forEach(id => { document.getElementById(id).disabled = disabled; });
+}
+
+function runSimulation() {
+  const yearsToRun = parseInt(document.getElementById('years-to-run-input').value);
+  if (yearsToRun <= 0 || simulationIntervalId) return;
+  
+  let yearsElapsed = 0;
+  toggleControls(true);
+
+  simulationIntervalId = setInterval(() => {
+    if (yearsElapsed >= yearsToRun) {
+      clearInterval(simulationIntervalId);
+      simulationIntervalId = null;
+      toggleControls(false);
+      return;
+    }
+    advanceYear();
+    yearsElapsed++;
+  }, 500);
+}
+
 function resetSimulation() {
-    // NEW: Re-initialize the random number generator with the same seed
+    if (simulationIntervalId) {
+        clearInterval(simulationIntervalId);
+        simulationIntervalId = null;
+    }
+    
     seededRandom = createSeededRandom(12345);
-
     year = 1;
-    newHomesPerYear = 3;
-    turnoverRate = 0.04;
-    corporatePolicy = 'unleashed';
+    demandFactor = 1.0; 
+    corporatePolicy = 'free';
+    strPolicy = 'free';
 
-    marketResults.purchasesByHomeowner = 0;
-    marketResults.purchasesByCorporate = 0;
-    marketResults.purchasesByIndividual = 0;
-    marketResults.convertedToShortTerm = 0;
+    Object.keys(marketResults).forEach(key => marketResults[key] = 0);
     
     document.getElementById('turnover-rate-input').value = 4;
     document.getElementById('new-homes-input').value = 3;
-    document.getElementById('unleash-corporate-btn').classList.add('active');
-    document.getElementById('restrict-corporate-btn').classList.remove('active');
+    document.getElementById('years-to-run-input').value = 1;
 
+    document.querySelectorAll('.policy-controls button').forEach(b => b.classList.remove('active'));
+    document.getElementById('corp-policy-free').classList.add('active');
+    document.getElementById('str-policy-free').classList.add('active');
+
+    toggleControls(false);
     setupSimulation();
     updateDisplay();
     renderVisualGrid();
 }
 
-// --- DISPLAY & RENDERING ---
 function updateDisplay() {
   const currentTotals = { homeowner: 0, individual: 0, corporate: 0 };
   housingStock.forEach(home => { if(home.ownerType) currentTotals[home.ownerType]++; });
@@ -151,9 +194,30 @@ function updateDisplay() {
   document.getElementById('current-corporate-total').textContent = currentTotals.corporate;
   
   const prices = housingStock.map(home => home.price).sort((a, b) => a - b);
-  const mid = Math.floor(prices.length / 2);
-  const medianPrice = prices.length % 2 === 0 ? (prices[mid - 1] + prices[mid]) / 2 : prices[mid];
+  const midPrice = Math.floor(prices.length / 2);
+  const medianPrice = prices.length % 2 === 0 ? (prices[midPrice - 1] + prices[midPrice]) / 2 : prices[midPrice];
   document.getElementById('median-home-price').textContent = `$${Math.round(medianPrice / 1000)}k`;
+
+  const rentalProperties = housingStock.filter(h => h.ownerType !== 'homeowner');
+  if (rentalProperties.length > 0) {
+    const rents = rentalProperties.map(h => h.rent).sort((a, b) => a - b);
+    const midRent = Math.floor(rents.length / 2);
+    const medianRent = rents.length % 2 === 0 ? (rents[midRent - 1] + rents[midRent]) / 2 : rents[midRent];
+    document.getElementById('median-rent').textContent = `$${Math.round(medianRent).toLocaleString()}`;
+  } else {
+    document.getElementById('median-rent').textContent = 'N/A';
+  }
+
+  const availableRentals = rentalProperties.filter(h => h.usage === 'LongTermRental').length;
+  document.getElementById('available-rental-units').textContent = availableRentals;
+
+  const demandStatusEl = document.getElementById('demand-status');
+  let demandText = 'Stable';
+  if (demandFactor >= 1.20) { demandText = 'Extreme'; } 
+  else if (demandFactor >= 1.10) { demandText = 'High'; } 
+  else if (demandFactor > 1.0) { demandText = 'Growing'; }
+  demandStatusEl.textContent = demandText;
+  demandStatusEl.className = `demand-${demandText.toLowerCase()}`;
 
   document.getElementById('year-display').textContent = year; 
   document.getElementById('buyer-first-time').textContent = marketResults.purchasesByHomeowner;
@@ -168,43 +232,37 @@ function renderVisualGrid() {
   housingStock.forEach(home => {
     const houseDiv = document.createElement('div');
     houseDiv.classList.add('house');
-
-    // NEW LOGIC: If a home is a short-term rental, color it purple.
-    // Otherwise, color it by its owner type.
     if (home.usage === 'ShortTermRental') {
       houseDiv.classList.add('shortterm');
     } else if (home.ownerType) {
       houseDiv.classList.add(home.ownerType); 
     }
-    
     grid.appendChild(houseDiv);
   });
 }
 
-// --- INITIALIZER ---
 document.addEventListener('DOMContentLoaded', () => {
-  // NEW: Initialize the random number generator on page load
   seededRandom = createSeededRandom(12345);
-
   setupSimulation();
   updateDisplay();
   renderVisualGrid();
 
+  document.getElementById('run-simulation-btn').addEventListener('click', runSimulation);
   document.getElementById('next-year-btn').addEventListener('click', advanceYear);
   document.getElementById('reset-btn').addEventListener('click', resetSimulation);
 
-  const unleashBtn = document.getElementById('unleash-corporate-btn');
-  const restrictBtn = document.getElementById('restrict-corporate-btn');
+  function setupPolicyGroup(groupId, stateUpdater) {
+      const group = document.getElementById(groupId);
+      group.addEventListener('click', (e) => {
+          if (e.target.tagName === 'BUTTON') {
+              const policy = e.target.id.split('-').pop();
+              stateUpdater(policy);
+              group.querySelector('.active').classList.remove('active');
+              e.target.classList.add('active');
+          }
+      });
+  }
 
-  unleashBtn.addEventListener('click', () => {
-    corporatePolicy = 'unleashed';
-    unleashBtn.classList.add('active');
-    restrictBtn.classList.remove('active');
-  });
-
-  restrictBtn.addEventListener('click', () => {
-    corporatePolicy = 'restricted';
-    restrictBtn.classList.add('active');
-    unleashBtn.classList.remove('active');
-  });
+  setupPolicyGroup('corporate-policy-group', (p) => corporatePolicy = p);
+  setupPolicyGroup('str-policy-group', (p) => strPolicy = p);
 });
