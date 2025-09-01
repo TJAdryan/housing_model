@@ -126,8 +126,8 @@ function advanceYear() {
   const strRatio = strHomes / housingStock.length;
   const longTermRentals = housingStock.filter(h => h.ownerType !== 'homeowner' && h.usage === 'LongTermRental');
 
-  // Select 10% of long-term rentals as vacant
-  const vacancyRate = 0.1;
+  // Select 15% of long-term rentals as vacant
+  const vacancyRate = 0.15;
   const numVacant = Math.floor(longTermRentals.length * vacancyRate);
   // Shuffle longTermRentals to randomize selection
   const shuffled = [...longTermRentals];
